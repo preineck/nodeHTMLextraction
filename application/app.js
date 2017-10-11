@@ -73,20 +73,25 @@ for (var i =0; i<surgHx.length;i++)
 // MEDICATIONS
 medName = [];
 $('.indented','.clinicalsummary').each(function (i,elem){
-    if ($(this).text().trim() ==="Name") // is the header row
-    {
-        i--;
-    }
-    else medName[i] = $(this).text().trim();    
+    medName[i] = $(this).text().trim();    
 })
-medNameFixed = [];
-for (var i = 0; i< medName.length; i++)
+for (var i =0; i<medName.length;i++)
 {
-    if medName[i] === "Name"
+    if (medName[i]==="Name")
+        {
+            medName[i] = null;
+        }
+}
+medNameFixed = []; //must remove header values in the indented class to sync up with medication details
+var actualMedCount =-1;
+for (var i =0; i<medName.length; i++)
+{
+    actualMedCount ++;
+    if (medName[i] === null)
     {
-        //do nothing
+        actualMedCount--;
     }
-    else medNameFixed
+    else medNameFixed[actualMedCount]= medName[i];
 }
 
 medSIG = []; 
@@ -96,16 +101,28 @@ $('.medicationdetails','.clinicalsummary').each(function (i,elem){
 
 medUser = [];
 $('.hideforprintfax','.clinicalsummary').each(function (i,elem){
-    if ($(this).text().trim() ==="Source") // is the header row
-    {
-        i--;
-    }
-    else medUser[i] = $(this).text().trim();
+    medUser[i] = $(this).text().trim();
 })
+medUserFixed = []; //must remove header values in the hideforprint class to sync up with medication details
+var actualUserCount =-1;
+for (var i =0; i<medUser.length; i++)
+{
+    actualUserCount ++;
+    if (medUser[i] === "Source")
+    {
+        actualUserCount--;
+    }
+    else medUserFixed[actualUserCount]= medUser[i];
+}
+
+
 
 for (var i=0; i<medName.length; i++)
 {
-    console.log(medName[i], ' | ', medSIG[i],' | ',medUser[i]);
+    console.log(medNameFixed[i]);
+    console.log(medSIG[i]);
+    console.log(medUserFixed[i]);
+    console.log('-----------');
 }
 
 
