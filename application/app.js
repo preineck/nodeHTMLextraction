@@ -8,27 +8,34 @@ const xml2js = require('xml2js');
  
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
- 
-var test = fs.readFileSync(input_macos).toString();
-//console.log('Just reading the stupid file: ',test.substring(0,100));
-//console.log(test);
- 
+
+// Load in HTML data
+var test = fs.readFileSync(input_windows).toString();
+$ = cheerio.load(test);
 //$( selector, [context], [root] )
  
+// Need patient ID:
+idLocation = test.indexOf("PATIENTID =");
+tickLocation = test.indexOf("'",idLocation+14);
+patientID = test.substring(idLocation+11,tickLocation).replace("'","");
+//console.log('Patient ID: ', patientID);
+
+// Get the Chart ID, whatever that is...
+chartIdLocation = test.indexOf("CHARTID =");
+tickLocation = test.indexOf("'",chartIdLocation+14);
+chartID = test.substring(chartIdLocation+11,tickLocation).replace("'","");
+//console.log('Chart ID: ', chartID);
+
+
+
 //DEMOGRAPHICS HEADERS
-$ = cheerio.load(test);
 demoHeader = $('.readonlydisplayfieldlabel','.clinicals_patient_chart_pm_demographicshtml_sub').text();
 // console.log(demoHeader);
  
 // DEMOGRAPHICS VALUES
-//$ = cheerio.load(test);
 demoValues = $('.readonlydisplayfielddata','.clinicals_patient_chart_pm_demographicshtml_sub').text();
-// console.log(demoValues);
- 
-//DEMOGRAPHICS ARRAY
-demoContents = $('.clinicals_patient_chart_pm_demographicshtml_sub').contents();
-// console.log(demoContents);//???
- 
+
+// DEMOGRAPHICS TO ARRAY
 const demoHdr =[];
 $('.readonlydisplayfieldlabel','.clinicals_patient_chart_pm_demographicshtml_sub').each(function (i, elem) {
     demoHdr[i] = $(this).text();
@@ -43,18 +50,22 @@ const demoVal = [];
 //     console.log(demoHdr[i],': ',demoVal[i]);
 // }
 
+// FAMILY HX
 const famHx = [];
 $('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
     famHx[i] = $(this).text();
 })
-console.log(famHx.length.toString());
-for (var i =0; i<famHx.length; i++)
+
+
+// SURGICAL HX
+const surgHx = [];
+$('.surgicalhxlist').each(function (i,elem) {
+    surgHx[i] = $(this).text().trim()
+});
+for (var i =0; i<surgHx.length;i++)
 {
-    console.log(i.toString(),': ',famHx[i]);
+   console.log(surgHx[i]);
 }
- 
-
-
 /*
 <ul id="fruits">
   <li class="apple">Apple</li>
