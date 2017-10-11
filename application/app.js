@@ -38,14 +38,23 @@ const demoVal = [];
       demoVal[i] = $(this).text();
   });
  
-for (var i =0; i<demoHdr.length; i++)
+// for (var i =0; i<demoHdr.length; i++)
+// {
+//     console.log(demoHdr[i],': ',demoVal[i]);
+// }
+
+const famHx = [];
+$('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
+    famHx[i] = $(this).text();
+})
+console.log(famHx.length.toString());
+for (var i =0; i<famHx.length; i++)
 {
-    console.log(demoHdr[i],': ',demoVal[i]);
+    console.log(i.toString(),': ',famHx[i]);
 }
  
-famHx = $('.familyhxtable').text();
-console.log(famHx);
- 
+
+
 /*
 <ul id="fruits">
   <li class="apple">Apple</li>
