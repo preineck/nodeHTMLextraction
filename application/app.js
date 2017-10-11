@@ -1,3 +1,4 @@
+const os = require('os');
 const fs = require('fs')
 const cheerio = require('cheerio');
 const xml2js = require('xml2js');
@@ -8,13 +9,16 @@ const xml2js = require('xml2js');
  
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
+var currentOS = os.platform();
+console.log('Current OS: ',currentOS);
+
 
 // Load in HTML data
-var test = fs.readFileSync(input_windows).toString();
+var test = fs.readFileSync(currentOS === 'win32' ? input_windows:input_macos).toString();
 $ = cheerio.load(test);
 //$( selector, [context], [root] )
  
-// Need patient ID:
+// Get patient ID:
 idLocation = test.indexOf("PATIENTID =");
 tickLocation = test.indexOf("'",idLocation+14);
 patientID = test.substring(idLocation+11,tickLocation).replace("'","");
@@ -25,7 +29,6 @@ chartIdLocation = test.indexOf("CHARTID =");
 tickLocation = test.indexOf("'",chartIdLocation+14);
 chartID = test.substring(chartIdLocation+11,tickLocation).replace("'","");
 //console.log('Chart ID: ', chartID);
-
 
 
 //DEMOGRAPHICS HEADERS
@@ -60,12 +63,52 @@ $('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
 // SURGICAL HX
 const surgHx = [];
 $('.surgicalhxlist').each(function (i,elem) {
-    surgHx[i] = $(this).text().trim()
+    surgHx[i] = $(this).text().trim();
 });
 for (var i =0; i<surgHx.length;i++)
 {
-   console.log(surgHx[i]);
+   //console.log(surgHx[i]);
 }
+
+// MEDICATIONS
+medName = [];
+$('.indented','.clinicalsummary').each(function (i,elem){
+    if ($(this).text().trim() ==="Name") // is the header row
+    {
+        i--;
+    }
+    else medName[i] = $(this).text().trim();    
+})
+medNameFixed = [];
+for (var i = 0; i< medName.length; i++)
+{
+    if medName[i] === "Name"
+    {
+        //do nothing
+    }
+    else medNameFixed
+}
+
+medSIG = []; 
+$('.medicationdetails','.clinicalsummary').each(function (i,elem){
+    medSIG[i] = $(this).text().trim();
+})
+
+medUser = [];
+$('.hideforprintfax','.clinicalsummary').each(function (i,elem){
+    if ($(this).text().trim() ==="Source") // is the header row
+    {
+        i--;
+    }
+    else medUser[i] = $(this).text().trim();
+})
+
+for (var i=0; i<medName.length; i++)
+{
+    console.log(medName[i], ' | ', medSIG[i],' | ',medUser[i]);
+}
+
+
 /*
 <ul id="fruits">
   <li class="apple">Apple</li>
