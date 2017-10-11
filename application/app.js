@@ -47,17 +47,22 @@ const demoVal = [];
   $('.readonlydisplayfielddata','.clinicals_patient_chart_pm_demographicshtml_sub').each(function (i, elem) {
       demoVal[i] = $(this).text();
   });
- 
-// for (var i =0; i<demoHdr.length; i++)
-// {
-//     console.log(demoHdr[i],': ',demoVal[i]);
-// }
+console.log('DEMOGRAPHICS');
+for (var i =0; i<demoHdr.length; i++)
+{   
+    console.log(demoHdr[i],': ',demoVal[i]);
+}
 
 // FAMILY HX
 const famHx = [];
 $('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
     famHx[i] = $(this).text();
 })
+console.log('FAMILY HISTORY');
+for (var i=0; i<famHx.length;i++)
+{
+    console.log(famHx[i]);
+}
 
 
 // SURGICAL HX
@@ -65,9 +70,10 @@ const surgHx = [];
 $('.surgicalhxlist').each(function (i,elem) {
     surgHx[i] = $(this).text().trim();
 });
+console.log('SURGICAL HISTORY');
 for (var i =0; i<surgHx.length;i++)
 {
-   //console.log(surgHx[i]);
+    console.log(surgHx[i]);
 }
 
 // MEDICATIONS
@@ -114,16 +120,48 @@ for (var i =0; i<medUser.length; i++)
     }
     else medUserFixed[actualUserCount]= medUser[i];
 }
-
-
-
+console.log('MEDICATIONS');
 for (var i=0; i<medName.length; i++)
 {
+
     console.log(medNameFixed[i]);
     console.log(medSIG[i]);
     console.log(medUserFixed[i]);
     console.log('-----------');
 }
+
+// PROBLEMS
+ptProb = [];
+$('.problemitem').each(function (i,elem) {
+    ptProb[i] = $(this).text().trim();
+})
+console.log('PATIENT PROBLEMS');
+for (var i =0; i<ptProb.length; i++)
+{
+    console.log(ptProb[i]);
+}
+
+// VACCINES 
+immHx = [];
+$('.clinical_patient_vaccinelist_htmlsummary_sub').each(function (i,elem) {
+    immHx[i] = $(this).text().trim();
+})
+console.log('VACCINES');
+for (var i =0; i<immHx.length; i++)
+{
+    console.log(immHx[i]);
+}
+
+// ALLERGIES
+//
+activeAllergies = $('.activeallergy').text();
+console.log('ALLERGIES');
+console.log(activeAllergies);
+
+// what if we just grab clinicalsummary...(kind of generic)
+generic = $('.medicationtable tr').nextUntil('.clinical_patient_vaccinelist_htmlsummary_sub').text();
+console.log('GENERIC: ',generic);
+
 
 
 /*
