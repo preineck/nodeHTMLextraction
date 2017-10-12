@@ -1,3 +1,4 @@
+var debug ;
 const os = require('os');
 const fs = require('fs')
 const cheerio = require('cheerio');
@@ -48,20 +49,26 @@ const demoVal = [];
       demoVal[i] = $(this).text();
   });
 console.log('DEMOGRAPHICS');
-for (var i =0; i<demoHdr.length; i++)
-{   
-    console.log(demoHdr[i],': ',demoVal[i]);
+if (debug)
+{
+    for (var i =0; i<demoHdr.length; i++)
+    {   
+        console.log(demoHdr[i],': ',demoVal[i]);
+    }
 }
-
 // FAMILY HX
 const famHx = [];
 $('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
     famHx[i] = $(this).text();
 })
 console.log('FAMILY HISTORY');
-for (var i=0; i<famHx.length;i++)
+if (debug)
 {
-    console.log(famHx[i]);
+    for (var i=0; i<famHx.length;i++)
+    {
+        console.log(famHx[i]);
+    }
+    
 }
 
 
@@ -71,9 +78,13 @@ $('.surgicalhxlist').each(function (i,elem) {
     surgHx[i] = $(this).text().trim();
 });
 console.log('SURGICAL HISTORY');
-for (var i =0; i<surgHx.length;i++)
+if (debug)
 {
-    console.log(surgHx[i]);
+    for (var i =0; i<surgHx.length;i++)
+    {
+        console.log(surgHx[i]);
+    }
+    
 }
 
 // MEDICATIONS -- BAD - NOT ALL MEDS HAVE ALL PROPERTIES 
@@ -136,9 +147,13 @@ $('.problemitem').each(function (i,elem) {
     ptProb[i] = $(this).text().trim();
 })
 console.log('PATIENT PROBLEMS');
-for (var i =0; i<ptProb.length; i++)
+if (debug)
 {
-    console.log(ptProb[i]);
+    for (var i =0; i<ptProb.length; i++)
+    {
+        console.log(ptProb[i]);
+    }
+    
 }
 
 // VACCINES 
@@ -147,22 +162,43 @@ $('.clinical_patient_vaccinelist_htmlsummary_sub').each(function (i,elem) {
     immHx[i] = $(this).text().trim();
 })
 console.log('VACCINES');
-for (var i =0; i<immHx.length; i++)
+if (debug)
 {
-    console.log(immHx[i]);
+    for (var i =0; i<immHx.length; i++)
+    {
+        console.log(immHx[i]);
+    }
 }
+
 
 // ALLERGIES
 //
 activeAllergies = $('.activeallergy').text();
 console.log('ALLERGIES');
-console.log(activeAllergies);
+if (debug)
+{
+    console.log(activeAllergies);
+}
+
 
 // what if we just grab clinicalsummary...(kind of generic)
 generic = $('.medicationtable tr').nextUntil('.clinical_patient_vaccinelist_htmlsummary_sub').text();
-console.log('GENERIC: ',generic);
 
-$('.medicationtable').find('.medicationrow').find('td').children().each( (i,e)=>{console.log(i + ". %o" , e)})
+$('.medicationtable').find('.medicationrow').find('td').children().each( (i,e)=>{
+    for (var key in e.children)
+    {
+        if (!key.hasOwnProperty(key)) continue;
+        var obj = e.children[key];
+        for (var prop in obj)
+        {
+            if (prop.toString()==="data")
+            {
+                console.log(prop+ '= '+obj[prop]);
+            }
+            
+        } 
+    }
+})
 
 /*
 <ul id="fruits">
