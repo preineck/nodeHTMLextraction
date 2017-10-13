@@ -8,7 +8,7 @@ const xml2js = require('xml2js');
 // const h2j = require('html-to-json');
 //const testDoc = require('../samples/sample.html')
  
-var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
+var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample4_medicationTableonly.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
 var currentOS = os.platform();
 console.log('Current OS: ',currentOS);
@@ -183,21 +183,51 @@ if (debug)
 
 // what if we just grab clinicalsummary...(kind of generic)
 generic = $('.medicationtable tr').nextUntil('.clinical_patient_vaccinelist_htmlsummary_sub').text();
-
-$('.medicationtable').find('.medicationrow').find('td').children().each( (i,e)=>{
+//.find('.medicationrow')
+$('.medicationtable').find('td').children().each( (i,e)=>{
+if (i < 1)
+{
+    console.log(i, e);
+    //fs.writeFileSync('medicationTable.json',JSON.stringify(e)); //no dice
     for (var key in e.children)
     {
         if (!key.hasOwnProperty(key)) continue;
         var obj = e.children[key];
         for (var prop in obj)
-        {
-            if (prop.toString()==="data")
             {
-                console.log(prop+ '= '+obj[prop]);
-            }
-            
-        } 
+                console.log(i,prop+ '= '+obj[prop]);
+
+                // Dig into parent to see what's there...
+                if (prop === "parent")
+                {
+                    console.log('got a parent');
+                    for (var key in obj[prop])
+                    {
+                        console.log('Key length: ',key.length);
+                        if (!key.hasOwnProperty(key)) continue;
+                        var parentObj = obj.parent[key];
+                        for (var prop in parentObj)
+                        {
+                            console.log('parent:', prop+'='+parentObj[prop]);
+                        }
+                    }
+                }
+
+                // if (prop === "next")
+                // {
+                //     console.log('got a next');
+                //     for (var key in prop)
+                //     {
+                //         var nextObj = prop[key];
+                //         for (var prop in nextObj)
+                //         {
+                //             console.log('next: ', prop+'='+nextObj[prop]);
+                //         }
+                //     }
+                // }
+            } 
     }
+}
 })
 
 /*
