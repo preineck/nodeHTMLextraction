@@ -1,4 +1,5 @@
-var debug ;
+var debug =1;
+const sql = require('mssql');
 const os = require('os');
 const fs = require('fs')
 const cheerio = require('cheerio');
@@ -8,7 +9,7 @@ const xml2js = require('xml2js');
 // const h2j = require('html-to-json');
 //const testDoc = require('../samples/sample.html')
  
-var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample4_medicationTableonly.html";
+var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
 var currentOS = os.platform();
 console.log('Current OS: ',currentOS);
@@ -23,14 +24,19 @@ $ = cheerio.load(test);
 idLocation = test.indexOf("PATIENTID =");
 tickLocation = test.indexOf("'",idLocation+14);
 patientID = test.substring(idLocation+11,tickLocation).replace("'","");
-//console.log('Patient ID: ', patientID);
+if (debug)
+{
+    console.log('Patient ID: ', patientID);
+}
 
 // Get the Chart ID, whatever that is...
 chartIdLocation = test.indexOf("CHARTID =");
 tickLocation = test.indexOf("'",chartIdLocation+14);
 chartID = test.substring(chartIdLocation+11,tickLocation).replace("'","");
-//console.log('Chart ID: ', chartID);
-
+if (debug)
+{
+    console.log('Chart ID: ', chartID);
+}
 
 //DEMOGRAPHICS HEADERS
 demoHeader = $('.readonlydisplayfieldlabel','.clinicals_patient_chart_pm_demographicshtml_sub').text();
@@ -87,60 +93,6 @@ if (debug)
     
 }
 
-// MEDICATIONS -- BAD - NOT ALL MEDS HAVE ALL PROPERTIES 
-// medName = [];
-// $('.indented','.clinicalsummary').each(function (i,elem){
-//     medName[i] = $(this).text().trim();    
-// })
-// for (var i =0; i<medName.length;i++)
-// {
-//     if (medName[i]==="Name")
-//         {
-//             medName[i] = null;
-//         }
-// }
-// medNameFixed = []; //must remove header values in the indented class to sync up with medication details
-// var actualMedCount =-1;
-// for (var i =0; i<medName.length; i++)
-// {
-//     actualMedCount ++;
-//     if (medName[i] === null)
-//     {
-//         actualMedCount--;
-//     }
-//     else medNameFixed[actualMedCount]= medName[i];
-// }
-
-// medSIG = []; 
-// $('.medicationdetails','.clinicalsummary').each(function (i,elem){
-//     medSIG[i] = $(this).text().trim();
-// })
-
-// medUser = [];
-// $('.hideforprintfax','.clinicalsummary').each(function (i,elem){
-//     medUser[i] = $(this).text().trim();
-// })
-// medUserFixed = []; //must remove header values in the hideforprint class to sync up with medication details
-// var actualUserCount =-1;
-// for (var i =0; i<medUser.length; i++)
-// {
-//     actualUserCount ++;
-//     if (medUser[i] === "Source")
-//     {
-//         actualUserCount--;
-//     }
-//     else medUserFixed[actualUserCount]= medUser[i];
-// }
-// console.log('MEDICATIONS');
-// for (var i=0; i<medName.length; i++)
-// {
-
-//     console.log(medNameFixed[i]);
-//     console.log(medSIG[i]);
-//     console.log(medUserFixed[i]);
-//     console.log('-----------');
-// }
-
 // PROBLEMS
 ptProb = [];
 $('.problemitem').each(function (i,elem) {
@@ -172,36 +124,99 @@ if (debug)
 
 
 // ALLERGIES
-//
-activeAllergies = $('.activeallergy').text();
-console.log('ALLERGIES');
-if (debug)
+allergies = [];
+activeAllergies = $('.activeallergy').each(function (i,elem) {
+    allergies[i] = $(this).text().trim();
+})
+
+for (var i =0; i < allergies.length; i++)
 {
-    console.log(activeAllergies);
+    if (debug){
+    console.log(allergies[i]);
+    }
+    
 }
+// Record encounter crap
+var currentDOS;
+$('.clinicalsummary').each(function (i,e) {
+    var currentSection = $(e).attr('sectionname');
+    
+    if (currentSection)
+    {
+ //       console.log(e);
+         //console.log('SECTION: ',currentSection);
+        if (currentSection ==="Patient")
+        {
+            // console.log('Getting DOS');
+            var text = $(e).find('tr').find('td').eq(1).map(function() {
+                currentDOS =    $(this).text().trim();
+                 console.log('This DOS is:', $(this).text().trim());
+            }).get()
+            
+        }   
+        console.log('Patient ID: ',patientID,'DOS: ',currentDOS, 'SECTION: ',currentSection,'Content:', $(this).text().replace('~',''));  
+        
+        async () => {
+            try {
+                const pool = await sql.connect('mssql://preineck:158hjKu93@192.168.202.50/omni_oh_pwh_staging')
+                const result = await sql.query`insert into nodeHTML.encounter_extraction (patientID, DOS,sectionName,sectionContent) values ('${patientId}','${currentDOS}','${currentSection}','${$(this).text().replace('~','')}')`
+                console.dir(result)
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    }
+})
 
-
-// what if we just grab clinicalsummary...(kind of generic)
-generic = $('.medicationtable tr').nextUntil('.clinical_patient_vaccinelist_htmlsummary_sub').text();
-//
-
+   
 // Medications
-var data = [];
+var medData = [];
 $('.medicationtable').each(function (i,td) {
     var children =$(this).children();
     var contents =children.eq(i).text()+" ";
    // var itemName =children.eq(i);
 
-    var row = {
-        'Rows': contents.replace('NameDateSource','').replace("entered","entered :").trim().split("\n")
-    };
-    data.push(row);
+   medData[i] = contents.replace('NameDateSource','').trim().split("\n")
+    // var row = {
+    //     'Rows': contents.replace('NameDateSource','').replace("entered","entered: ").trim().split("\n")
+    // };
+    // medData.push(row);
     //console.log(row);
    
 })
+var splitMedData = [];
+for (var i =0; i < medData.length; i++)
+{
+    for (var j = 0; j < medData[i].length; j++)
+    {
+        splitMedData[i] = medData[i][j].replace('entered','entered: ').replace('.','.  ');
+        console.log(splitMedData[i]);
+    }
+}
 
-console.log(data[0])
-
+// var generic = [];
+// $('.clinicalsummarybox table tr td').each(function (i,e) {
+//     for (var key in e.children)
+//         {
+//             if (!key.hasOwnProperty(key)) continue;
+//             var obj = e.children[key];
+//             for (var prop in obj)
+//                 {
+//                 if(!obj.hasOwnProperty(prop)) continue;
+//                     if( prop ==="data")
+//                     {
+//                         console.log(i,prop+ '= '+obj[prop]);
+//                     }
+                
+//                 }
+//         }
+// })
+// var generic2 =[];
+// $('.clinicalsummarybox table tr td').each(function (i,e) {
+//     var contents =$(this).text();
+    
+//     console.log('generic2',contents);
+// })
 // $('.medicationtable').find('.medicationrow').find('td').children().each( (i,e)=>{
 //         console.log(i, e);
 //         $(e).each( (i,e) => {
@@ -348,16 +363,6 @@ console.log(data[0])
 //     console.log(result);
 // })
 
-
-
-
-
-
-
-
-
-
-
 // var CCD = (function () {
 //     function CCD(input) {
 //         this.filePath = input;
@@ -389,4 +394,57 @@ console.log(data[0])
 //     catch (ex) {
 //         console.log(ex);
 //     }
+// }
+// MEDICATIONS -- BAD - NOT ALL MEDS HAVE ALL PROPERTIES 
+// medName = [];
+// $('.indented','.clinicalsummary').each(function (i,elem){
+//     medName[i] = $(this).text().trim();    
+// })
+// for (var i =0; i<medName.length;i++)
+// {
+//     if (medName[i]==="Name")
+//         {
+//             medName[i] = null;
+//         }
+// }
+// medNameFixed = []; //must remove header values in the indented class to sync up with medication details
+// var actualMedCount =-1;
+// for (var i =0; i<medName.length; i++)
+// {
+//     actualMedCount ++;
+//     if (medName[i] === null)
+//     {
+//         actualMedCount--;
+//     }
+//     else medNameFixed[actualMedCount]= medName[i];
+// }
+
+// medSIG = []; 
+// $('.medicationdetails','.clinicalsummary').each(function (i,elem){
+//     medSIG[i] = $(this).text().trim();
+// })
+
+// medUser = [];
+// $('.hideforprintfax','.clinicalsummary').each(function (i,elem){
+//     medUser[i] = $(this).text().trim();
+// })
+// medUserFixed = []; //must remove header values in the hideforprint class to sync up with medication details
+// var actualUserCount =-1;
+// for (var i =0; i<medUser.length; i++)
+// {
+//     actualUserCount ++;
+//     if (medUser[i] === "Source")
+//     {
+//         actualUserCount--;
+//     }
+//     else medUserFixed[actualUserCount]= medUser[i];
+// }
+// console.log('MEDICATIONS');
+// for (var i=0; i<medName.length; i++)
+// {
+
+//     console.log(medNameFixed[i]);
+//     console.log(medSIG[i]);
+//     console.log(medUserFixed[i]);
+//     console.log('-----------');
 // }
