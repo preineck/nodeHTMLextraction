@@ -183,52 +183,89 @@ if (debug)
 
 // what if we just grab clinicalsummary...(kind of generic)
 generic = $('.medicationtable tr').nextUntil('.clinical_patient_vaccinelist_htmlsummary_sub').text();
-//.find('.medicationrow')
-$('.medicationtable').find('td').children().each( (i,e)=>{
-if (i < 1)
-{
-    console.log(i, e);
-    //fs.writeFileSync('medicationTable.json',JSON.stringify(e)); //no dice
-    for (var key in e.children)
-    {
-        if (!key.hasOwnProperty(key)) continue;
-        var obj = e.children[key];
-        for (var prop in obj)
-            {
-                console.log(i,prop+ '= '+obj[prop]);
+//
 
-                // Dig into parent to see what's there...
-                if (prop === "parent")
-                {
-                    console.log('got a parent');
-                    for (var key in obj[prop])
-                    {
-                        console.log('Key length: ',key.length);
-                        if (!key.hasOwnProperty(key)) continue;
-                        var parentObj = obj.parent[key];
-                        for (var prop in parentObj)
-                        {
-                            console.log('parent:', prop+'='+parentObj[prop]);
-                        }
-                    }
-                }
+// Medications
+var data = [];
+$('.medicationtable').each(function (i,td) {
+    var children =$(this).children();
+    var contents =children.eq(i).text()+" ";
+   // var itemName =children.eq(i);
 
-                // if (prop === "next")
-                // {
-                //     console.log('got a next');
-                //     for (var key in prop)
-                //     {
-                //         var nextObj = prop[key];
-                //         for (var prop in nextObj)
-                //         {
-                //             console.log('next: ', prop+'='+nextObj[prop]);
-                //         }
-                //     }
-                // }
-            } 
-    }
-}
+    var row = {
+        'Rows': contents.replace('NameDateSource','').replace("entered","entered :").trim().split("\n")
+    };
+    data.push(row);
+    //console.log(row);
+   
 })
+
+console.log(data[0])
+
+// $('.medicationtable').find('.medicationrow').find('td').children().each( (i,e)=>{
+//         console.log(i, e);
+//         $(e).each( (i,e) => {
+//             for (var key in e.children)
+//             {
+//                 if (!key.hasOwnProperty(key)) continue;
+//                 var obj = e.children[key];
+//                 for (var prop in obj)
+//                     {
+//                     if(!obj.hasOwnProperty(prop)) continue;
+//                     console.log(i,prop+ '= '+obj[prop]);
+//                     }
+//             }
+//         })
+        // var $ = cheerio.load(html);
+        // var arr = $('a[class=A]');   
+        // var array = [];
+        // arr.each(function() {
+        //     array.push({
+        //         title: $(this).attr('title'),
+        //         IP: $(this).text()
+        //     });
+        // });
+        // var text = $("div.A")
+        // .contents()
+        // .filter(function() {
+        //     return this.nodeType === 3; // 3 = Text node
+        // })
+        // .map(function() {
+        //     return this.nodeValue;
+        // })
+        // .get();
+        //fs.writeFileSync('medicationTable.json',JSON.stringify(e)); //no dice
+        // for (var key in e.children)
+        // {
+        //     if (!key.hasOwnProperty(key)) continue;
+        //     var obj = e.children[key];
+        //     for (var prop in obj)
+        //         {
+        //         console.log(i,prop+ '= '+obj[prop]);
+        //         }
+        // }
+        // if (!key.hasOwnProperty(key)) continue;
+        // var obj = e.parent[key];
+        // for (var prop in obj)
+        //     {
+        //         console.log('divprop: ',i,prop+ '= '+obj[prop]);
+        //         if (prop ==="next")
+        //         {
+        //             $(obj.next).each( (i,e) => {
+        //             console.log('next thing');
+        //             for (var key in e.children)
+        //                 {
+        //                  if (!key.hasOwnProperty(key)) continue;
+        //                  var obj = e.next[key];
+        //                  for (var prop in obj)
+        //                     {
+        //                         console.log('next property',i,prop+ '= '+obj[prop]);                                    
+        //                     }   
+        //                 }
+        //             })
+        //         }
+        //    }
+//})
 
 /*
 <ul id="fruits">
