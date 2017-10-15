@@ -8,7 +8,16 @@ const xml2js = require('xml2js');
 // const textract = require('textract');
 // const h2j = require('html-to-json');
 //const testDoc = require('../samples/sample.html')
- 
+
+var connString = {
+server: "192.168.202.50\\DEV",
+database: "OMNI_OH_PWH_STAGING",
+user: "preineck",
+password: "158hjKu93",
+port: 1433
+}
+
+
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
 var currentOS = os.platform();
@@ -136,7 +145,7 @@ for (var i =0; i < allergies.length; i++)
     }
     
 }
-// Record encounter crap
+// Record encounter stuff
 var currentDOS;
 $('.clinicalsummary').each(function (i,e) {
     var currentSection = $(e).attr('sectionname');
@@ -155,16 +164,8 @@ $('.clinicalsummary').each(function (i,e) {
             
         }   
         console.log('Patient ID: ',patientID,'DOS: ',currentDOS, 'SECTION: ',currentSection,'Content:', $(this).text().replace('~',''));  
+        //`insert into nodeHTML.encounter_extraction (patientID, DOS,sectionName,sectionContent) values ('${patientId}','${currentDOS}','${currentSection}','${$(this).text().replace('~','').replace('\'','')}')`
         
-        async () => {
-            try {
-                const pool = await sql.connect('mssql://preineck:158hjKu93@192.168.202.50/omni_oh_pwh_staging')
-                const result = await sql.query`insert into nodeHTML.encounter_extraction (patientID, DOS,sectionName,sectionContent) values ('${patientId}','${currentDOS}','${currentSection}','${$(this).text().replace('~','')}')`
-                console.dir(result)
-            } catch (err) {
-                console.log(err);
-            }
-        }
     }
 })
 
