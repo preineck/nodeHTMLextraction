@@ -3,11 +3,6 @@ const sql = require('mssql');
 const os = require('os');
 const fs = require('fs')
 const cheerio = require('cheerio');
-const xml2js = require('xml2js');
-// const htmlparser = require("htmlparser");
-// const textract = require('textract');
-// const h2j = require('html-to-json');
-//const testDoc = require('../samples/sample.html')
 
 var connString = {
 server: "192.168.202.50\\DEV",
@@ -17,42 +12,69 @@ password: "158hjKu93",
 port: 1433
 }
 
+// SQL Insert Variables:
+var currentDOS;
+var currentSection;
+var patientID;
+var sectionContent;
+//`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`
 
+//  async function insertEncounterRow() {
+//     var dbConn = new sql.Connection(connString);
+//     dbConn.connect().then(function () {
+//         var transaction = new sql.Transaction(dbConn);
+//         transaction.begin().then(function () {
+//             var request = new sql.Request(transaction);
+//             request.query(`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`)
+//         .then(function () {
+//                 transaction.commit().then(function (recordSet) {
+//                     console.log('Recordset: ',recordSet);
+//                     dbConn.close();
+//                 }).catch(function (err) {
+//                     console.log("Error in Transaction Commit " + err);
+//                     dbConn.close();
+//                 });
+//             }).catch(function (err) {
+//                 console.log("Error in Transaction Begin " + err);
+//                 dbConn.close();
+//             });
+//         }).catch(function (err) {
+//             console.log(err);
+//             dbConn.close();
+//         });
+//     }).catch(function (err) {
+//         console.log(err);
+//     });
+// }
+
+// HTML Source:
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
 var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
 var currentOS = os.platform();
 console.log('Current OS: ',currentOS);
 
-
 // Load in HTML data
-var test = fs.readFileSync(currentOS === 'win32' ? input_windows:input_macos).toString();
-$ = cheerio.load(test);
+var html = fs.readFileSync(currentOS === 'win32' ? input_windows:input_macos).toString();
+$ = cheerio.load(html);
 //$( selector, [context], [root] )
  
 // Get patient ID:
-idLocation = test.indexOf("PATIENTID =");
-tickLocation = test.indexOf("'",idLocation+14);
-patientID = test.substring(idLocation+11,tickLocation).replace("'","");
+idLocation = html.indexOf("PATIENTID =");
+tickLocation = html.indexOf("'",idLocation+14);
+patientID = html.substring(idLocation+11,tickLocation).replace("'","");
 if (debug)
 {
     console.log('Patient ID: ', patientID);
 }
 
 // Get the Chart ID, whatever that is...
-chartIdLocation = test.indexOf("CHARTID =");
-tickLocation = test.indexOf("'",chartIdLocation+14);
-chartID = test.substring(chartIdLocation+11,tickLocation).replace("'","");
+chartIdLocation =html.indexOf("CHARTID =");
+tickLocation = html.indexOf("'",chartIdLocation+14);
+chartID = html.substring(chartIdLocation+11,tickLocation).replace("'","");
 if (debug)
 {
     console.log('Chart ID: ', chartID);
 }
-
-//DEMOGRAPHICS HEADERS
-demoHeader = $('.readonlydisplayfieldlabel','.clinicals_patient_chart_pm_demographicshtml_sub').text();
-// console.log(demoHeader);
- 
-// DEMOGRAPHICS VALUES
-demoValues = $('.readonlydisplayfielddata','.clinicals_patient_chart_pm_demographicshtml_sub').text();
 
 // DEMOGRAPHICS TO ARRAY
 const demoHdr =[];
@@ -71,6 +93,7 @@ if (debug)
         console.log(demoHdr[i],': ',demoVal[i]);
     }
 }
+
 // FAMILY HX
 const famHx = [];
 $('.familyhxtable','.clinicalsummarybox').each(function (i,elem) {
@@ -86,7 +109,6 @@ if (debug)
     
 }
 
-
 // SURGICAL HX
 const surgHx = [];
 $('.surgicalhxlist').each(function (i,elem) {
@@ -99,7 +121,6 @@ if (debug)
     {
         console.log(surgHx[i]);
     }
-    
 }
 
 // PROBLEMS
@@ -113,8 +134,7 @@ if (debug)
     for (var i =0; i<ptProb.length; i++)
     {
         console.log(ptProb[i]);
-    }
-    
+    }   
 }
 
 // VACCINES 
@@ -146,9 +166,8 @@ for (var i =0; i < allergies.length; i++)
     
 }
 // Record encounter stuff
-var currentDOS;
 $('.clinicalsummary').each(function (i,e) {
-    var currentSection = $(e).attr('sectionname');
+    currentSection = $(e).attr('sectionname');
     
     if (currentSection)
     {
@@ -162,10 +181,30 @@ $('.clinicalsummary').each(function (i,e) {
                  console.log('This DOS is:', $(this).text().trim());
             }).get()
             
-        }   
-        console.log('Patient ID: ',patientID,'DOS: ',currentDOS, 'SECTION: ',currentSection,'Content:', $(this).text().replace('~',''));  
-        //`insert into nodeHTML.encounter_extraction (patientID, DOS,sectionName,sectionContent) values ('${patientId}','${currentDOS}','${currentSection}','${$(this).text().replace('~','').replace('\'','')}')`
+        }
+        sectionContent = $(this).text().replace('~','');   
+        (async function () {
+            try {
+                let pool = await sql.connect(connString)
+                let result1 = await pool.request()
+                    .query(`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`)
+                    
+                console.dir(result1)
+            } catch (err) {
+                console.log(err);
+            }
+        })()
+         
+        sql.on('error', err => {
+            console.log(err);
+        })
+        console.log('PATIENT ID: ',patientID);
+        console.log('DOS: ',currentDOS);
+        console.log('SECTION: ',currentSection);
+        console.log('CONTENT:', sectionContent); 
         
+        //`insert into nodeHTML.encounter_extraction (patientID, DOS,sectionName,sectionContent) values ('${patientId}','${currentDOS}','${currentSection}','${$(this).text().replace('~','').replace('\'','')}')`
+        console.log('---------------------------------------------------------------------------------------------------------------------------');
     }
 })
 
@@ -449,3 +488,9 @@ for (var i =0; i < medData.length; i++)
 //     console.log(medUserFixed[i]);
 //     console.log('-----------');
 // }
+// //DEMOGRAPHICS HEADERS
+// demoHeader = $('.readonlydisplayfieldlabel','.clinicals_patient_chart_pm_demographicshtml_sub').text();
+// // console.log(demoHeader);
+ 
+// // DEMOGRAPHICS VALUES
+// demoValues = $('.readonlydisplayfielddata','.clinicals_patient_chart_pm_demographicshtml_sub').text();
