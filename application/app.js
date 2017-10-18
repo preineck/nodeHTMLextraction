@@ -17,35 +17,37 @@ var currentDOS;
 var currentSection;
 var patientID;
 var sectionContent;
+
+sql.connect(connString);
 //`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`
 
-//  async function insertEncounterRow() {
-//     var dbConn = new sql.Connection(connString);
-//     dbConn.connect().then(function () {
-//         var transaction = new sql.Transaction(dbConn);
-//         transaction.begin().then(function () {
-//             var request = new sql.Request(transaction);
-//             request.query(`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`)
-//         .then(function () {
-//                 transaction.commit().then(function (recordSet) {
-//                     console.log('Recordset: ',recordSet);
-//                     dbConn.close();
-//                 }).catch(function (err) {
-//                     console.log("Error in Transaction Commit " + err);
-//                     dbConn.close();
-//                 });
-//             }).catch(function (err) {
-//                 console.log("Error in Transaction Begin " + err);
-//                 dbConn.close();
-//             });
-//         }).catch(function (err) {
-//             console.log(err);
-//             dbConn.close();
-//         });
-//     }).catch(function (err) {
-//         console.log(err);
-//     });
-// }
+ async function insertEncounterRow(thing) {
+    var dbConn = new sql.Connection(connString);
+    dbConn.connect().then(function () {
+        var transaction = new sql.Transaction(dbConn);
+        transaction.begin().then(function () {
+            var request = new sql.Request(transaction);
+            request.query(thing)
+        .then(function () {
+                transaction.commit().then(function (recordSet) {
+                    console.log('Recordset: ',recordSet);
+                  //  dbConn.close();
+                }).catch(function (err) {
+                    console.log("Error in Transaction Commit " + err);
+                  //  dbConn.close();
+                });
+            }).catch(function (err) {
+                console.log("Error in Transaction Begin " + err);
+               // dbConn.close();
+            });
+        }).catch(function (err) {
+            console.log(err);
+           // dbConn.close();
+        });
+    }).catch(function (err) {
+        console.log(err);
+    });
+}
 
 // HTML Source:
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
@@ -166,6 +168,7 @@ for (var i =0; i < allergies.length; i++)
     
 }
 // Record encounter stuff
+var sqlInserts = [];
 $('.clinicalsummary').each(function (i,e) {
     currentSection = $(e).attr('sectionname');
     
@@ -182,22 +185,11 @@ $('.clinicalsummary').each(function (i,e) {
             }).get()
             
         }
-        sectionContent = $(this).text().replace('~','');   
-        (async function () {
-            try {
-                let pool = await sql.connect(connString)
-                let result1 = await pool.request()
-                    .query(`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`)
-                    
-                console.dir(result1)
-            } catch (err) {
-                console.log(err);
-            }
-        })()
-         
-        sql.on('error', err => {
-            console.log(err);
-        })
+        sectionContent = $(this).text().replace('~','').replace('\n','<br>').replace('\'', '\'\'');   
+
+        sqlInserts[i] =  `insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`;
+     
+        
         console.log('PATIENT ID: ',patientID);
         console.log('DOS: ',currentDOS);
         console.log('SECTION: ',currentSection);
@@ -234,6 +226,13 @@ for (var i =0; i < medData.length; i++)
     }
 }
 
+for (var i = 0; i< sqlInserts.length; i++)
+{
+    console.log(sqlInserts[i]);  
+    insertEncounterRow(sqlInserts[i]);
+}
+
+sql.close();
 // var generic = [];
 // $('.clinicalsummarybox table tr td').each(function (i,e) {
 //     for (var key in e.children)
