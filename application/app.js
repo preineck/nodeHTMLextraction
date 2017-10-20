@@ -21,13 +21,15 @@ var sqlEncounterInserts = [];
 var sqlDemoInserts = [];
 var sqlClinicalInserts = [];
 
-sql.connect(connString);
+var myConnection = new sql.Connection(connString);
+myConnection.connect();
+
 //`insert into [nodeHTML].[encounter_extraction] (patientId, DOS, sectionName, sectionContent) values ('${patientID}','${currentDOS}','${currentSection}','${sectionContent}')`
 
  async function insertRow(thing) {
-    var dbConn = new sql.Connection(connString);
-    dbConn.connect().then(function () {
-        var transaction = new sql.Transaction(dbConn);
+    // var dbConn = new sql.Connection(connString);
+    // dbConn.connect().then(function () {
+        var transaction = new sql.Transaction(myConnection);
         transaction.begin().then(function () {
             var request = new sql.Request(transaction);
             request.query(thing)
@@ -40,21 +42,21 @@ sql.connect(connString);
                   //  dbConn.close();
                 });
             }).catch(function (err) {
-                console.log("Error in Transaction Begin " + err);
+                console.log("Error in Transaction Begin " + err, thing);
                // dbConn.close();
             });
         }).catch(function (err) {
             console.log(err);
            // dbConn.close();
         });
-    }).catch(function (err) {
-        console.log(err);
-    });
+    // }).catch(function (err) {
+    //     console.log(err);
+    // });
 }
 
 // HTML Source:
 var input_windows = "C:\\Users\\paulr\\Google Drive\\Clients\\PWH\\NodeExtraction\\samples\\sample.html";
-var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample.html";
+var input_macos = "/Users/johnreineck/Google Drive/Clients/PWH/NodeExtraction/samples/sample3.html";
 var currentOS = os.platform();
 console.log('Current OS: ',currentOS);
 
@@ -96,7 +98,7 @@ if (debug)
     for (var i =0; i<demoHdr.length; i++)
     {   
         sqlDemoInserts[i] = `insert into nodeHTML.demographics_extraction (patientID, chartId, attributeName, attributeValue) values ('${patientID}','${chartID}','${demoHdr[i]}','${demoVal[i]}')`
-        console.log(demoHdr[i],': ',demoVal[i]);
+       // console.log(demoHdr[i],': ',demoVal[i]);
     }
 }
 
@@ -112,7 +114,7 @@ if (debug)
     for (var i=0; i<famHx.length;i++)
     {
         sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','FamilyHx','${famHx[i]}')`);
-        console.log(famHx[i]);
+        //console.log(famHx[i]);
     }
     
 }
@@ -128,7 +130,7 @@ if (debug)
     for (var i =0; i<surgHx.length;i++)
     {
         sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','SurgicalHx','${surgHx[i]}')`);
-        console.log(surgHx[i]);
+        //console.log(surgHx[i]);
     }
 }
 
@@ -143,7 +145,7 @@ if (debug)
     for (var i =0; i<ptProb.length; i++)
     {
         sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Problems','${ptProb[i]}')`);
-        console.log(ptProb[i]);
+        //console.log(ptProb[i]);
     }   
 }
 
@@ -157,7 +159,7 @@ if (debug)
 {
     for (var i =0; i<immHx.length; i++)
     {
-        console.log(immHx[i]);
+        //console.log(immHx[i]);
         sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Immunizations','${immHx[i]}')`);
     }
 }
@@ -172,7 +174,7 @@ activeAllergies = $('.activeallergy').each(function (i,elem) {
 for (var i =0; i < allergies.length; i++)
 {
     if (debug){
-    console.log(allergies[i]);
+    //console.log(allergies[i]);
     sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Allergies','${allergies[i]}')`);
     
     }
@@ -232,21 +234,24 @@ for (var i =0; i < medData.length; i++)
 {
     for (var j = 0; j < medData[i].length; j++)
     {
-        splitMedData[i] = medData[i][j].replace('entered','entered: ').replace('.','.  ').replace('\'', '\'\'');
-        console.log(splitMedData[i]);
-        sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Medications','${splitMedData[i][j]}')`);
+        splitMedData[j] = medData[i][j].replace('entered','entered: ').replace('.','.  ').replace('\'', '\'\'');
+        //console.log(splitMedData[j]);
+        
     }
 }
-// for (var i =0; i<splitMedData.length; i++)
-// {
-//     sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Medications','${splitMedData[i]}')`);
-//     console.log(splitMedData[i]);
-// }
+for (var i =0; i<splitMedData.length; i++)
+{
+    if (splitMedData[i].trim() !="")
+    {
+        sqlClinicalInserts.push(`insert into [nodeHTML].[clinical_extraction] (patientId, sectionName, sectionContent) values ('${patientID}','Medications','${splitMedData[i]}')`);
+        //console.log(splitMedData[i]);
+    }
+}
 
 /* Insert Demographics records:*/
  for (var i = 0; i< sqlDemoInserts.length; i++)
  {
-     console.log(sqlDemoInserts[i]);  
+     //console.log(sqlDemoInserts[i]);  
      insertRow(sqlDemoInserts[i]);
  }
 
@@ -261,7 +266,7 @@ for (var i =0; i < medData.length; i++)
 /* Insert Clinical records:*/
  for (var i = 0; i< sqlClinicalInserts.length; i++)
  {
-     console.log(sqlClinicalInserts[i]);  
+     //console.log(sqlClinicalInserts[i]);  
      insertRow(sqlClinicalInserts[i]);
  }
 
